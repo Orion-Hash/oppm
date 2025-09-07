@@ -1,7 +1,7 @@
 {
     "name": "logger",
     "version": "0.0.1",
-    "description": "Logger, for... Logging stuff? What else did you think it was for",
+    "description": "Cuztom made logger for Oppm. Supports multiple log types with colors. Can save logs.",
     "oppm": {
         "format": 1
     }
