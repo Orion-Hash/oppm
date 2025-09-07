@@ -1,0 +1,8 @@
+{
+    "name": "logger",
+    "version": "0.0.1",
+    "description": "Logger, for... Logging stuff? What else did you think it was for",
+    "oppm": {
+        "format": 1
+    }
+}
