@@ -52,9 +52,9 @@ class Logger:
         frame = inspect.currentframe()
         caller = None
         if frame is not None:
-            caller = frame.f_back.f_back
-        if caller is None:
             caller = frame.f_back
+        if caller is None:
+            caller = frame
 
         if caller is not None:
             filename = os.path.basename(caller.f_code.co_filename)

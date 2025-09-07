@@ -1,5 +1,6 @@
 import argparse
-import sys
+import urllib.request
+import json
 
 BASE_URL = "https://raw.githubusercontent.com/Orion-Hash/oppm/main/packages"
 
@@ -16,10 +17,19 @@ install_parser.add_argument("package", help="Name of the package to install")
 # Parse args AFTER commands are defined
 args = parser.parse_args()
 
+def GetManifest(url: str) -> dict:
+    try:
+        with urllib.request.urlopen(url) as response:
+            data = response.read()
+            manifest = json.loads(data)
+            return manifest
+    except Exception as e:
+        print(f"Error fetching manifest: {e}. The package may not exist.")
+        return {}
 if args.command == "install":
     print(f"Installing {args.package}...")
 
-BUBBLE_POP_ELECTRIC = str.lower(args.package)
+    BUBBLE_POP_ELECTRIC = str.lower(args.package)
 
-PACKAGE_URL = f"{BASE_URL}/{BUBBLE_POP_ELECTRIC}/src/manifest.json"
-print(PACKAGE_URL)
+    PACKAGE_URL = f"{BASE_URL}/{BUBBLE_POP_ELECTRIC}/src/{BUBBLE_POP_ELECTRIC}/manifest.json"
+    GetManifest(PACKAGE_URL)
