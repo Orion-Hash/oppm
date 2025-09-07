@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oppm"
+version = "0.1.0"
+description = "Oppm Command Line Interface"
+authors = [
+    { name = "Orion-hash" }
+]
+
+[project.scripts]
+oppm = "oppm.__main__:main"
