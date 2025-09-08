@@ -1,8 +1,0 @@
-{
-    "name": "logger",
-    "version": "0.0.1",
-    "description": "Cuztom made logger for Oppm. Supports multiple log types with colors. Can save logs.",
-    "oppm": {
-        "format": 1
-    }
-}

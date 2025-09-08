@@ -1,0 +1,10 @@
+{
+  "author": "orion hash",
+  "description": "Logger. Read the documentation if you want to know how to use.",
+  "files": [
+    "package_creator.py"
+  ],
+  "license": "Apache-2.0",
+  "name": "logger",
+  "version": "1.0.0"
+}
