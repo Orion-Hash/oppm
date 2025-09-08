@@ -1,0 +1,13 @@
+{
+    "name": "logger",
+    "version": "1.0.0",
+    "description": "Customized logger. Use if you want to, see if I care.",
+    "files": [
+        "logger.py"
+    ],
+    "author": "Auto",
+    "license": "Apache-2.0",
+    "dependencies": {
+
+    }
+}

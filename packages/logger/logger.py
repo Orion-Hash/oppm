@@ -112,3 +112,4 @@ class Logger:
                 self.current_level = self.LEVELS[level]
                 self.Info(f"Log level set to {level}")
 
+
