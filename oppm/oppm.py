@@ -69,23 +69,23 @@ class OPPM:
             print(f"Warning: Could not fetch package list: {e}")
             return []
     
-    def _get_package_info(self, package_name: str) -> Dict:
+    def _get_package_info(self, package: str) -> Dict:
         """Get package information from package.json"""
-        url = f"{self.base_url}/{package_name}/package.json"
+        url = f"{self.base_url}/{package}/package.json"
         try:
             response = self._fetch_url(url)
             return json.loads(response.decode())
         except Exception as e:
-            raise Exception(f"Package '{package_name}' not found or invalid: {e}")
+            raise Exception(f"Package '{package}' not found or invalid: {e}")
     
-    def _download_package_files(self, package_name: str, package_info: Dict, temp_dir: Path):
+    def _download_package_files(self, package: str, package_info: Dict, temp_dir: Path):
         """Download all package files to temporary directory"""
         files = package_info.get('files', [])
         if not files:
-            raise Exception(f"No files specified in package '{package_name}'")
+            raise Exception(f"No files specified in package '{package}'")
         
         for file_path in files:
-            url = f"{self.base_url}/{package_name}/{file_path}"
+            url = f"{self.base_url}/{package}/{file_path}"
             try:
                 content = self._fetch_url(url)
                 file_dest = temp_dir / file_path
@@ -98,19 +98,19 @@ class OPPM:
             except Exception as e:
                 raise Exception(f"Failed to download {file_path}: {e}")
     
-    def _resolve_dependencies(self, package_name: str, resolved: Set[str] = None) -> List[str]: # Type: ignore
+    def _resolve_dependencies(self, package: str, resolved: Set[str] = None) -> List[str]: # Type: ignore
         """Recursively resolve package dependencies"""
         if resolved is None:
             resolved = set()
         
-        if package_name in resolved:
+        if package in resolved:
             return []
         
-        resolved.add(package_name)
+        resolved.add(package)
         dependencies = []
         
         try:
-            package_info = self._get_package_info(package_name)
+            package_info = self._get_package_info(package)
             deps = package_info.get('dependencies', [])
             
             for dep in deps:
@@ -118,34 +118,34 @@ class OPPM:
                     dependencies.extend(self._resolve_dependencies(dep, resolved))
                     dependencies.append(dep)
         except Exception as e:
-            print(f"Warning: Could not resolve dependencies for {package_name}: {e}")
+            print(f"Warning: Could not resolve dependencies for {package}: {e}")
         
         return dependencies
     
-    def install(self, package_name: str, force: bool = False):
+    def install(self, package: str, force: bool = False):
         """Install a package and its dependencies"""
-        if package_name in self.installed_packages and not force:
-            print(f"Package '{package_name}' is already installed. Use --force to reinstall.")
+        if package in self.installed_packages and not force:
+            print(f"Package '{package}' is already installed. Use --force to reinstall.")
             return
         
-        print(f"Installing package: {package_name}")
+        print(f"Installing package: {package}")
         
         # Get package info
         try:
-            package_info = self._get_package_info(package_name)
+            package_info = self._get_package_info(package)
         except Exception as e:
             print(f"Error: {e}")
             return
         
         # Resolve and install dependencies first
-        dependencies = self._resolve_dependencies(package_name)
+        dependencies = self._resolve_dependencies(package)
         for dep in dependencies:
-            if dep != package_name:
+            if dep != package:
                 print(f"Installing dependency: {dep}")
                 self.install(dep, force=False)
         
         # Create package directory
-        package_dir = self.local_packages_dir / package_name
+        package_dir = self.local_packages_dir / package
         if package_dir.exists() and not force:
             print(f"Package directory already exists: {package_dir}")
             return
@@ -154,7 +154,7 @@ class OPPM:
         with tempfile.TemporaryDirectory() as temp_dir:
             temp_path = Path(temp_dir)
             try:
-                self._download_package_files(package_name, package_info, temp_path)
+                self._download_package_files(package, package_info, temp_path)
                 
                 # Remove existing directory if force install
                 if package_dir.exists():
@@ -174,7 +174,7 @@ class OPPM:
                         print(f"  Warning: Post-install script failed: {e}")
                 
                 # Mark as installed
-                self.installed_packages[package_name] = {
+                self.installed_packages[package] = {
                     'version': package_info.get('version', '1.0.0'),
                     'description': package_info.get('description', ''),
                     'installed_files': package_info.get('files', []),
@@ -182,31 +182,31 @@ class OPPM:
                 }
                 self._save_installed_packages()
                 
-                print(f"Successfully installed: {package_name}")
+                print(f"Successfully installed: {package}")
                 
             except Exception as e:
                 print(f"Error installing package: {e}")
                 if package_dir.exists():
                     shutil.rmtree(package_dir)
     
-    def uninstall(self, package_name: str):
+    def uninstall(self, package: str):
         """Uninstall a package"""
-        if package_name not in self.installed_packages:
-            print(f"Package '{package_name}' is not installed.")
+        if package not in self.installed_packages:
+            print(f"Package '{package}' is not installed.")
             return
         
         # Check if other packages depend on this one
         dependents = []
         for pkg, info in self.installed_packages.items():
-            if package_name in info.get('dependencies', []):
+            if package in info.get('dependencies', []):
                 dependents.append(pkg)
         
         if dependents:
-            print(f"Cannot uninstall '{package_name}' because it's required by: {', '.join(dependents)}")
+            print(f"Cannot uninstall '{package}' because it's required by: {', '.join(dependents)}")
             print("Uninstall the dependent packages first, or use --force")
             return
         
-        package_dir = self.local_packages_dir / package_name
+        package_dir = self.local_packages_dir / package
         
         # Run pre-uninstall script if it exists
         pre_uninstall_script = package_dir / "pre_uninstall.py"
@@ -223,10 +223,10 @@ class OPPM:
             shutil.rmtree(package_dir)
         
         # Remove from installed packages
-        del self.installed_packages[package_name]
+        del self.installed_packages[package]
         self._save_installed_packages()
         
-        print(f"Successfully uninstalled: {package_name}")
+        print(f"Successfully uninstalled: {package}")
     
     def list_installed(self):
         """List all installed packages"""
@@ -260,13 +260,13 @@ class OPPM:
             except:
                 print(f"  [{installed}] {package}: Unable to fetch info")
     
-    def show_package_info(self, package_name: str):
+    def show_package_info(self, package: str):
         """Show detailed information about a package"""
         try:
-            info = self._get_package_info(package_name)
-            installed = package_name in self.installed_packages
+            info = self._get_package_info(package)
+            installed = package in self.installed_packages
             
-            print(f"Package: {package_name}")
+            print(f"Package: {package}")
             print(f"Version: {info.get('version', 'unknown')}")
             print(f"Description: {info.get('description', 'No description')}")
             print(f"Author: {info.get('author', 'Unknown')}")
@@ -285,14 +285,14 @@ class OPPM:
         except Exception as e:
             print(f"Error: {e}")
     
-    def update(self, package_name: str = None): # type: ignore
+    def update(self, package: str = None): # type: ignore
         """Update a specific package or all packages"""
-        if package_name:
-            if package_name not in self.installed_packages:
-                print(f"Package '{package_name}' is not installed.")
+        if package:
+            if package not in self.installed_packages:
+                print(f"Package '{package}' is not installed.")
                 return
-            print(f"Updating {package_name}...")
-            self.install(package_name, force=True)
+            print(f"Updating {package}...")
+            self.install(package, force=True)
         else:
             print("Updating all installed packages...")
             for pkg in list(self.installed_packages.keys()):
